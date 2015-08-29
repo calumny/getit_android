@@ -51,7 +51,8 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:paddingTop="550dp"
-            android:id="@+id/generations">
+            android:id="@+id/generations"
+            android:paddingLeft="16dp">
 
             <!--TextView
                 android:layout_width="match_parent"

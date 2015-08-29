@@ -50,6 +50,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:text="387 OTHER PEOPLE HAVE IT"
+        android:paddingLeft="16dp"
         android:visibility="invisible"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="#FF5252"/>
