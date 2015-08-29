@@ -429,7 +429,7 @@ public class GetIt extends AppCompatActivity implements GoogleApiClient.Connecti
 
                 @Override
                 public void failure(RetrofitError retrofitError) {
-                    showMessage("COULDN'T CONNECT T SERVER");
+                    showMessage("COULDN'T CONNECT TO SERVER");
                     retrofitError.printStackTrace();
                     // Log error here since request failed
                 }
