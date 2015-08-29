@@ -105,8 +105,9 @@ public class GetIt extends AppCompatActivity implements GoogleApiClient.Connecti
 
         gotIt = lastGotIt && gotItYear.equals(currYear) && gotItMonth.equals(currMonth);
 
+        setContentView(R.layout.activity_get_it);
+
         if (!gotIt) {
-            setContentView(R.layout.activity_get_it);
             getCount();
         } else {
             Intent giveIt = new Intent(GetIt.this, GiveIt.class);

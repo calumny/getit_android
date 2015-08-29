@@ -197,6 +197,7 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
                         message = String.format("%d PEOPLE GOT IT", newChildren);
                     }
                     showMessage(message);
+                    getGenerationCounts();
                 } else {
                     showMessage("NOBODY GOT IT");
                 }
