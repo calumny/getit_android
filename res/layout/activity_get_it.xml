@@ -1,0 +1,58 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#7B1FA2"
+    android:scrollbars="none" tools:context=".GetIt">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="600dp">
+
+    <TextView android:text="@string/dont_have_it" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:textSize="70sp"
+        android:gravity="center"
+        android:textColor="#FF5252"
+        android:id="@+id/statusText"/>
+
+        <TextView android:text="@string/give_it_to_you" android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="100dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="60sp"
+            android:gravity="center"
+            android:textColor="#FF5252"
+            android:visibility="invisible"
+            android:id="@+id/messageText"/>
+
+    <Button
+        android:id="@+id/get_it"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="400dp"
+        android:layout_centerHorizontal="true"
+        android:text="@string/get_it"
+        android:textSize="40sp"
+        android:textColor="#7B1FA2"
+        android:background="@drawable/get_it_selector"
+        android:padding="10dp"/>
+
+    <TextView
+        android:id="@+id/totalCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="387 OTHER PEOPLE HAVE IT"
+        android:visibility="invisible"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textColor="#FF5252"/>
+
+</RelativeLayout>
+    </ScrollView>

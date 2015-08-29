@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="gotItText">#009688</color>
+    <color name="getItLight">#9C27B0</color>
+    <color name="getItDark">#FF5252</color>
+    <color name="giveItLight">#3F51B5</color>
+    <color name="giveItDark">#009688</color>
+</resources>

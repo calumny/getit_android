@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">GetIt</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="dont_have_it">YOU DON\'T HAVE IT</string>
+    <string name="got_it">YOU\'VE GOT IT</string>
+    <string name="give_it_to_you">SOMEONE NEEDS TO GIVE IT TO YOU</string>
+    <string name="nobody_got_it">NOBODY GOT IT</string>
+    <string name="get_it">GET IT</string>
+    <string name="give_it">GIVE IT</string>
+    <string name="api_endpoint">http://52.5.22.160:81</string>
+    <string name="prefs_token_key">GET_IT_TOKEN</string>
+    <string name="prefs_month_key">GOT_IT_MONTH</string>
+    <string name="prefs_year_key">GOT_IT_YEAR</string>
+    <string name="prefs_got_it_key">GOT_IT</string>
+</resources>
