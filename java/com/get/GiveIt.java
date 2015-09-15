@@ -1,12 +1,15 @@
-package com.getit;
+package com.get;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
+//import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,14 +20,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-import org.joda.time.DateTime;
-
-import java.util.List;
+import java.util.*;
 
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
@@ -34,7 +36,7 @@ import retrofit.client.Response;
 
 //import android.location.LocationListener;
 
-public class GiveIt extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private boolean gotIt;
 
@@ -51,6 +53,31 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
     private LocationRequest mLocationRequest;
 
     private Integer mChildren = 0;
+
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String TAG = "GetIt";
+
+    /**
+     * Check the device to make sure it has the Google Play Services APK. If
+     * it doesn't, display a dialog that allows users to download the APK from
+     * the Google Play Store or enable it in the device's system settings.
+     */
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
+                        .show();
+            } else {
+                Log.i(TAG, "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
+    }
+
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -93,6 +120,17 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
         setContentView(R.layout.activity_got_it);
         buildGoogleApiClient();
         mGoogleApiClient.connect();
+
+        View map = findViewById(R.id.map);
+        map.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent mapActivity = new Intent(GiveIt.this, MapActivity.class);
+                startActivity(mapActivity);
+                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
+            }
+        });
+
         setButtonListener();
 
     }
@@ -116,11 +154,13 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
             } else {
 
                 mToken = token;
+
                 tokenReady = true;
                 checkStatus();
 
             }
         } else {
+
             checkStatus();
         }
 
@@ -257,7 +297,8 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
                     TextView generationView = new TextView(GiveIt.this);
 
                     generationView.setText("YOU'VE GIVEN IT TO 0 PEOPLE");
-                    generationView.setTextAppearance(GiveIt.this, R.style.Base_TextAppearance_AppCompat_Medium);
+//                    generationView.setTextAppearance(GiveIt.this, R.style.Base_TextAppearance_AppCompat_Medium);
+                    generationView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                     generationView.setTextColor(getResources().getColor(R.color.gotItText));
 
                     generationsLayout.addView(generationView);
@@ -298,7 +339,8 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
                         TextView generationView = new TextView(GiveIt.this);
 
                         generationView.setText(generationText);
-                        generationView.setTextAppearance(GiveIt.this, R.style.Base_TextAppearance_AppCompat_Medium);
+                        generationView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+//                        generationView.setTextAppearance(GiveIt.this, R.style.Base_TextAppearance_AppCompat_Medium);
                         generationView.setTextColor(getResources().getColor(R.color.gotItText));
 
                         generationsLayout.addView(generationView);
@@ -349,6 +391,7 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
                 editor.commit();
 
                 mToken = token.getKey();
+
                 tokenReady = true;
                 checkStatus();
                 // Access user here after response is parsed
@@ -360,8 +403,8 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
                 retrofitError.printStackTrace();
 
                 // Log error here since request failed
-                }
-            });
+            }
+        });
 
     }
 
@@ -385,6 +428,15 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
                 editor.commit();
 
                 mToken = token.getKey();
+
+                if (checkPlayServices()) {
+                    // Start IntentService to register this application with GCM.
+                    Intent intent = new Intent(GiveIt.this, RegistrationIntentService.class);
+                    intent.putExtra("SERVER_TOKEN", mToken);
+                    Log.d(TAG, "STARTING SERVICE INTENT");
+                    startService(intent);
+                }
+
                 tokenReady = true;
                 checkStatus();
                 // Access user here after response is parsed
@@ -405,8 +457,10 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
     }
 
     private void showMessage(String message) {
-        final View text =  findViewById(R.id.statusText);
+        final TextView text =  (TextView) findViewById(R.id.statusText);
         final TextView messageView = (TextView) findViewById(R.id.messageText);
+        messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 60);
+
         Animation statusOut = AnimationUtils.loadAnimation(this, R.anim.slide_out);
         final Animation messageOut = AnimationUtils.loadAnimation(this, R.anim.slide_out);
         messageOut.setStartOffset(600);
@@ -423,6 +477,7 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
             @Override
             public void onAnimationEnd(Animation animation) {
                 text.startAnimation(statusIn);
+                text.setText("YOU'VE GOT IT");
             }
 
             @Override
@@ -456,6 +511,43 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
 
     }
 
+
+    private void showGivingIt() {
+        final TextView text =  (TextView) findViewById(R.id.statusText);
+        final TextView messageView = (TextView) findViewById(R.id.messageText);
+        messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 70);
+
+        Animation statusOut = AnimationUtils.loadAnimation(this, R.anim.slide_out);
+        statusOut.setFillAfter(false);
+        Animation messageIn = AnimationUtils.loadAnimation(this, R.anim.slide_in);
+        messageIn.setFillAfter(false);
+
+        statusOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                text.setText("GIVING IT");
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+        messageView.setText("GIVING IT");
+        messageView.setVisibility(View.VISIBLE);
+
+        text.startAnimation(statusOut);
+        messageView.startAnimation(messageIn);
+
+    }
+
+
     private void tryGiveIt() {
 
         if (!locationReady) {
@@ -468,16 +560,10 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
 //            Toast.makeText(GetIt.this, "Couldn't connect to Get It server", Toast.LENGTH_SHORT).show();
 
         } else {
+            showGivingIt();
 
             View giveItButton = findViewById(R.id.give_it);
             giveItButton.setVisibility(View.INVISIBLE);
-            Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    checkGaveIt();
-                }
-            }, 5000);
 
             final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(GiveIt.this);
 
@@ -503,9 +589,13 @@ public class GiveIt extends AppCompatActivity implements GoogleApiClient.Connect
             service.giveIt(location, new Callback<Boolean>() {
                 @Override
                 public void success(Boolean serverGotIt, Response response) {
-                    if (serverGotIt) {
-
-                    }
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            checkGaveIt();
+                        }
+                    }, 5000);
                 }
 
                 @Override

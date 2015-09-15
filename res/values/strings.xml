@@ -5,6 +5,7 @@
     <string name="dont_have_it">YOU DON\'T HAVE IT</string>
     <string name="got_it">YOU\'VE GOT IT</string>
     <string name="give_it_to_you">SOMEONE NEEDS TO GIVE IT TO YOU</string>
+    <string name="reset">IT\'S BEEN RESET</string>
     <string name="nobody_got_it">NOBODY GOT IT</string>
     <string name="get_it">GET IT</string>
     <string name="give_it">GIVE IT</string>
@@ -13,4 +14,8 @@
     <string name="prefs_month_key">GOT_IT_MONTH</string>
     <string name="prefs_year_key">GOT_IT_YEAR</string>
     <string name="prefs_got_it_key">GOT_IT</string>
+    <string name="title_activity_map">Map</string>
+    <string name="gcm_defaultSenderId">30114952254</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

@@ -1,8 +1,7 @@
-package com.getit;
+package com.get;
 
 import retrofit.Callback;
 import retrofit.http.Body;
-import retrofit.http.GET;
 import retrofit.http.POST;
 
 /**
@@ -14,4 +13,7 @@ public interface AuthenticationService {
 
     @POST("/api/get_token/")
     void getToken(@Body Credentials credentials, Callback<TokenResponse> cb);
+
+    @POST("/api/set_gcm_token/")
+    void setGcmToken(@Body TokenResponse token, Callback<Boolean> cb);
 }

@@ -1,0 +1,46 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#7B1FA2"
+    android:scrollbars="none" tools:context=".GetIt">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="600dp">
+
+    <TextView android:text="@string/reset" android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:textSize="90sp"
+        android:gravity="center"
+        android:textColor="#FF5252"
+        android:id="@+id/reset"/>
+
+
+    <TextView
+        android:id="@+id/totalCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/reset"
+        android:layout_centerHorizontal="true"
+        android:text="387 OTHER PEOPLE GOT IT"
+        android:textSize="20sp"
+        android:textColor="#FF5252"/>
+
+        <TextView
+            android:id="@+id/myStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/totalCount"
+            android:layout_centerHorizontal="true"
+            android:text="YOU DIDN'T GET IT"
+            android:textSize="20sp"
+            android:textColor="#FF5252"/>
+
+
+</RelativeLayout>
+    </ScrollView>

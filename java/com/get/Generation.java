@@ -1,4 +1,4 @@
-package com.getit;
+package com.get;
 
 import com.google.gson.annotations.SerializedName;
 

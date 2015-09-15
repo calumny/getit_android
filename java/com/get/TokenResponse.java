@@ -1,4 +1,4 @@
-package com.getit;
+package com.get;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -8,6 +8,10 @@ import com.google.gson.annotations.SerializedName;
 public class TokenResponse {
     @SerializedName("key")
     private String key;
+
+    public TokenResponse(String key) {
+        this.key = key;
+    }
 
     public String getKey() {
         return key;

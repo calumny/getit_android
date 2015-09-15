@@ -1,4 +1,4 @@
-package com.getit;
+package com.get;
 
 import android.content.Context;
 

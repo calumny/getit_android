@@ -1,4 +1,4 @@
-package com.getit;
+package com.get;
 
 import java.util.List;
 
@@ -16,6 +16,9 @@ public interface GetItService {
 
     @POST("/api/give_it/")
     void giveIt(@Body GetItLocation location, Callback<Boolean> cb);
+
+    @POST("/api/confirm_location/")
+    void confirmLocation(@Body GetItLocation location, Callback<Boolean> cb);
 
     @GET("/api/status/")
     void getStatus(Callback<Boolean> cb);

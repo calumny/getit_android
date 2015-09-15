@@ -52,8 +52,18 @@
         android:text="387 OTHER PEOPLE HAVE IT"
         android:paddingLeft="16dp"
         android:visibility="invisible"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textSize="16sp"
         android:textColor="#FF5252"/>
+
+        <ImageView
+            android:id="@+id/map"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_map"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="5dp"
+            android:layout_alignParentBottom="true"
+            android:tint="#FF5252"/>
 
 </RelativeLayout>
     </ScrollView>

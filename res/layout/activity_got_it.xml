@@ -54,14 +54,19 @@
             android:id="@+id/generations"
             android:paddingLeft="16dp">
 
-            <!--TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:textColor="#009688"
-                android:text="YOU'VE GIVEN IT TO X PEOPLE"/-->
 
         </LinearLayout>
+
+        <ImageView
+            android:id="@+id/map"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_map"
+            android:layout_alignTop="@id/generations"
+            android:layout_marginTop="550dp"
+            android:layout_marginRight="5dp"
+            android:layout_alignParentRight="true"
+            android:tint="#009688"/>
 
     </RelativeLayout>
 </ScrollView>

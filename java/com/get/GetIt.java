@@ -1,15 +1,12 @@
-package com.getit;
+package com.get;
 
-import android.animation.AnimatorInflater;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 //import android.location.LocationListener;
-import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
+//import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -18,11 +15,10 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -30,15 +26,13 @@ import com.google.android.gms.location.LocationListener;
 
 import org.joda.time.DateTime;
 
-import java.util.List;
-
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
 
-public class GetIt extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
+public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private boolean gotIt;
 
@@ -55,6 +49,30 @@ public class GetIt extends AppCompatActivity implements GoogleApiClient.Connecti
     private LocationRequest mLocationRequest;
 
     private Integer mChildren = 0;
+
+    private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
+    private static final String TAG = "GetIt";
+
+    /**
+     * Check the device to make sure it has the Google Play Services APK. If
+     * it doesn't, display a dialog that allows users to download the APK from
+     * the Google Play Store or enable it in the device's system settings.
+     */
+    private boolean checkPlayServices() {
+        GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+        int resultCode = apiAvailability.isGooglePlayServicesAvailable(this);
+        if (resultCode != ConnectionResult.SUCCESS) {
+            if (apiAvailability.isUserResolvableError(resultCode)) {
+                apiAvailability.getErrorDialog(this, resultCode, PLAY_SERVICES_RESOLUTION_REQUEST)
+                        .show();
+            } else {
+                Log.i(TAG, "This device is not supported.");
+                finish();
+            }
+            return false;
+        }
+        return true;
+    }
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -117,6 +135,17 @@ public class GetIt extends AppCompatActivity implements GoogleApiClient.Connecti
         }
         buildGoogleApiClient();
         mGoogleApiClient.connect();
+
+        View map = findViewById(R.id.map);
+        map.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent mapActivity = new Intent(GetIt.this, MapActivity.class);
+                startActivity(mapActivity);
+                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
+            }
+        });
+
         setButtonListener();
 
     }
@@ -299,6 +328,14 @@ public class GetIt extends AppCompatActivity implements GoogleApiClient.Connecti
                 editor.commit();
 
                 mToken = token.getKey();
+
+                if (checkPlayServices()) {
+                    // Start IntentService to register this application with GCM.
+                    Intent intent = new Intent(GetIt.this, RegistrationIntentService.class);
+                    intent.putExtra("SERVER_TOKEN", mToken);
+                    startService(intent);
+                }
+
                 tokenReady = true;
                 checkStatus();
                 // Access user here after response is parsed
