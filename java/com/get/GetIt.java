@@ -1,5 +1,6 @@
 package com.get;
 
+import android.animation.ArgbEvaluator;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,15 +9,22 @@ import android.location.Location;
 import android.preference.PreferenceManager;
 //import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.facebook.rebound.SimpleSpringListener;
+import com.facebook.rebound.Spring;
+import com.facebook.rebound.SpringConfig;
+import com.facebook.rebound.SpringSystem;
+import com.facebook.rebound.SpringUtil;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -124,6 +132,11 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
         gotIt = lastGotIt && gotItYear.equals(currYear) && gotItMonth.equals(currMonth);
 
         setContentView(R.layout.activity_get_it);
+
+        status =  findViewById(R.id.statusText);
+        messageView = (TextView) findViewById(R.id.messageText);
+        messageView.setVisibility(View.VISIBLE);
+
 
         if (!gotIt) {
             getCount();
@@ -260,9 +273,61 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
         });
     }
 
+    private SpringSystem springSystem;
+    private Spring xrotationSpring;
+    private Spring yrotationSpring;
+    private Spring messageSpring, statusSpring;
+    private Spring depthSpring;
+    private Spring popAnimationSpring;
+    private View button;
+    private int width;
+
+    private boolean depthOn = true;
+
     private void setButtonListener() {
 
         Button getItButton = (Button) findViewById(R.id.get_it);
+        button = getItButton;
+        getItButton.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                if (event.getAction() != MotionEvent.ACTION_UP) {
+                    float screenX = event.getX();
+                    float screenY = event.getY();
+                    float viewX = screenX - v.getWidth() / 2;
+                    float viewY = -screenY + v.getHeight() / 2;
+
+                    if (event.getY() < v.getHeight() + 30 && event.getY() > -30 && event.getX() < v.getWidth() + 30 && event.getX() > -30) {
+                        xrotation(true);
+                        xrotationSpring.setEndValue(viewY / 5);
+                        yrotation(true);
+                        yrotationSpring.setEndValue(viewX / 20);
+                        depth(true);
+                        popAnimation(true);
+                        float scaleProgress = Math.max(0, 1 - 2 * (Math.abs(viewX) + Math.abs(viewY)) / (v.getWidth() + v.getHeight()));
+                        depthSpring.setEndValue(scaleProgress);
+                    } else {
+                        xrotation(false);
+                        yrotation(false);
+                        popAnimation(false);
+                        depth(false);
+                    }
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        tryGetIt();
+                    }
+                    return true;
+                } else {
+                    xrotation(false);
+                    yrotation(false);
+                    popAnimation(false);
+                    depth(false);
+//                    tryGetIt();
+                    return true;
+                }
+
+            }
+        });
         getItButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -270,6 +335,151 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
             }
         });
 
+        springSystem = SpringSystem.create();
+
+        xrotationSpring = springSystem.createSpring()
+                .setSpringConfig(SpringConfig.fromBouncinessAndSpeed(5, 20))
+                .addListener(new SimpleSpringListener() {
+                    @Override
+                    public void onSpringUpdate(Spring spring) {
+                        setXrotationProgress((float) spring.getCurrentValue());
+                    }
+                });
+
+
+        DisplayMetrics metrics = this.getResources().getDisplayMetrics();
+        width = metrics.widthPixels;
+        int height = metrics.heightPixels;
+
+        messageSpring = springSystem.createSpring()
+                .setSpringConfig(SpringConfig.fromBouncinessAndSpeed(7, 10))
+                .addListener(new SimpleSpringListener() {
+                    @Override
+                    public void onSpringUpdate(Spring spring) {
+                        setMessageTranslationProgress((float) spring.getCurrentValue());
+                    }
+                    @Override
+                    public void onSpringAtRest(Spring spring) {
+/*                        if (messageSpring.getEndValue() >= 0) {
+                            messageSpring.setEndValue(-width);
+                        } else if (messageSpring.getEndValue() < 0) {*/
+                            messageSpring.setEndValue(width);
+//                            messageSpring.setCurrentValue(width);
+//                        }
+                    }
+                });
+
+        statusSpring = springSystem.createSpring()
+                .setSpringConfig(SpringConfig.fromBouncinessAndSpeed(7, 10))
+                .addListener(new SimpleSpringListener() {
+                    @Override
+                    public void onSpringUpdate(Spring spring) {
+                        setStatusTranslationProgress((float) spring.getCurrentValue());
+                    }
+                    @Override
+                    public void onSpringAtRest(Spring spring) {
+/*                        if (statusSpring.getEndValue() < 0) {
+                            statusSpring.setCurrentValue(width);*/
+                            statusSpring.setEndValue(0);
+//                        }
+                    }
+                });
+
+        statusSpring.setEndValue(0);
+        statusSpring.setCurrentValue(0);
+        messageSpring.setEndValue(width);
+        messageSpring.setCurrentValue(width);
+
+        yrotationSpring = springSystem.createSpring()
+                .setSpringConfig(SpringConfig.fromBouncinessAndSpeed(5, 20))
+                .addListener(new SimpleSpringListener() {
+                    @Override
+                    public void onSpringUpdate(Spring spring) {
+                        setYrotationProgress((float) spring.getCurrentValue());
+                    }
+                });
+
+        depthSpring = springSystem.createSpring()
+                .setSpringConfig(SpringConfig.fromBouncinessAndSpeed(5, 30))
+                .addListener(new SimpleSpringListener() {
+                    @Override
+                    public void onSpringUpdate(Spring spring) {
+                        setDepthProgress((float) spring.getCurrentValue());
+                    }
+                });
+
+        popAnimationSpring = springSystem.createSpring()
+                .setSpringConfig(SpringConfig.fromBouncinessAndSpeed(9, 10))
+                .addListener(new SimpleSpringListener() {
+                    @Override
+                    public void onSpringUpdate(Spring spring) {
+                        setPopAnimationProgress((float) spring.getCurrentValue());
+                    }
+                });
+
+    }
+
+
+    // xrotation transition
+
+    public void xrotation(boolean on) {
+        xrotationSpring.setEndValue(on ? 1 : 0);
+    }
+
+    public void setXrotationProgress(float progress) {    button.setRotationX(progress);
+    }
+
+    public void setMessageTranslationProgress(float progress) {    messageView.setTranslationX(progress);
+    }
+
+    public void setStatusTranslationProgress(float progress) {    status.setTranslationX(progress);
+    }
+
+    public void messagetranslation(boolean on) {
+        messageSpring.setEndValue(on ? 1 : 0);
+    }
+
+
+    // yrotation transition
+
+    public void yrotation(boolean on) {
+        yrotationSpring.setEndValue(on ? 1 : 0);
+    }
+
+    public void setYrotationProgress(float progress) {    button.setRotationY(progress);
+    }
+
+    // depth transition
+
+    public void depth(boolean on) {
+        depthSpring.setEndValue(on ? 1 : 0);
+    }
+
+    public void setDepthProgress(float progress) {
+        button.setScaleX(transition(progress, 1, 0.9f));
+        button.setScaleY(transition(progress, 1, 0.9f));
+    }
+
+    // popAnimation transition
+
+    public void popAnimation(boolean on) {
+        popAnimationSpring.setEndValue(on ? 1 : 0);
+    }
+
+    public void setPopAnimationProgress(float progress) {
+        float reverse2 = transition(progress, 1f, 0f);
+        ArgbEvaluator evaluator = new ArgbEvaluator();
+        Integer newColor = (Integer)evaluator.evaluate(progress, getResources().getColor(R.color.getItDark), getResources().getColor(R.color.getItLight));
+        if (newColor < -16000000){
+            newColor = getResources().getColor(R.color.getItDark);
+        }
+        button.setBackgroundColor(newColor);
+    }
+
+    // Utilities
+
+    public float transition (float progress, float startValue, float endValue) {
+        return (float) SpringUtil.mapValueFromRangeToRange(progress, 0, 1, startValue, endValue);
     }
 
     private void loginAndGetStatus() {
@@ -355,10 +565,15 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
         return Installation.id(this);
     }
 
+    private View status;
+    private TextView messageView;
+
     private void showMessage(String message) {
-        final View text =  findViewById(R.id.statusText);
-        final TextView messageView = (TextView) findViewById(R.id.messageText);
-        Animation statusOut = AnimationUtils.loadAnimation(this, R.anim.slide_out);
+        messageView.setText(message);
+        messageSpring.setEndValue(0f);
+        statusSpring.setEndValue(-width);
+
+/*        Animation statusOut = AnimationUtils.loadAnimation(this, R.anim.slide_out);
         final Animation messageOut = AnimationUtils.loadAnimation(this, R.anim.slide_out);
         messageOut.setStartOffset(600);
         final Animation statusIn = AnimationUtils.loadAnimation(this, R.anim.slide_in);
@@ -404,6 +619,7 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
 
         text.startAnimation(statusOut);
         messageView.startAnimation(messageIn);
+*/
 
     }
 
