@@ -37,6 +37,8 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import org.joda.time.DateTime;
+
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
@@ -51,7 +53,9 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
 
     private Location mLocation;
 
-    private boolean locationReady;
+    private String mMessage;
+
+    private boolean locationReady, sendLocation;
 
     private LocationRequest mLocationRequest;
 
@@ -77,14 +81,20 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
     @Override
     public void onConnected(Bundle connectionHint) {
         mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        Log.d(TAG, "ON CONNECTED");
         if (mLocation == null) {
+            Log.d(TAG, "REQUESTING LOCATION");
             mLocationRequest = new LocationRequest();
             mLocationRequest.setInterval(60 * 1000);
             mLocationRequest.setPriority(LocationRequest.PRIORITY_NO_POWER);
             mLocationRequest.setSmallestDisplacement(10f);
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
         } else {
+            Log.d(TAG, "LOCATION NOT NULL");
             locationReady = true;
+            if (sendLocation) {
+                sendLocationToServer();
+            }
         }
     }
 
@@ -92,6 +102,9 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
     public void onLocationChanged (Location location) {
         mLocation = location;
         locationReady = true;
+        if (sendLocation) {
+            sendLocationToServer();
+        }
     }
 
     @Override
@@ -99,6 +112,64 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
         super.onCreate();
         buildGoogleApiClient();
         mGoogleApiClient.connect();
+    }
+
+    private void sendLocationToServer() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MyGcmListenerService.this);
+
+        final String mToken = prefs.getString(getResources().getString(R.string.prefs_token_key), "");
+
+        RequestInterceptor requestInterceptor = new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+                request.addHeader("Authorization", "Token " + mToken);
+            }
+        };
+
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(getResources().getString(R.string.api_endpoint))
+                .setRequestInterceptor(requestInterceptor)
+                .build();
+
+        GetItService service = restAdapter.create(GetItService.class);
+        Log.d(TAG, "LAT:  " + mLocation.getLatitude());
+        Log.d(TAG, "LON:  " + mLocation.getLongitude());
+
+//            GetItLocation location = new GetItLocation(42, -71);
+        GetItLocation location = new GetItLocation(mLocation.getLatitude(), mLocation.getLongitude());
+//                GetItLocation location = new GetItLocation(0, 0);
+
+        service.confirmLocation(location, new Callback<Boolean>() {
+            @Override
+            public void success(Boolean serverGotIt, Response response) {
+                if (serverGotIt) {
+                    sendNotification(mMessage);
+
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MyGcmListenerService.this);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean(getResources().getString(R.string.prefs_got_it_key), true);
+                    DateTime currTime = new DateTime();
+                    Integer currMonth = currTime.getMonthOfYear();
+                    Integer currYear = currTime.getYear();
+
+                    editor.putInt(getResources().getString(R.string.prefs_year_key), currYear);
+                    editor.putInt(getResources().getString(R.string.prefs_month_key), currMonth);
+                    editor.commit();
+
+                    sendLocation = false;
+                    Log.d(TAG, "SERVER GOT IT");
+                } else {
+                    Log.d(TAG, "SERVER DIDN'T GET IT");
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+                retrofitError.printStackTrace();
+                // Log error here since request failed
+            }
+        });
+
     }
 
     /**
@@ -112,55 +183,21 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
     @Override
     public void onMessageReceived(String from, Bundle data) {
         final String message = data.getString("message");
+        mMessage = message;
         Log.d(TAG, "From: " + from);
         Log.d(TAG, "Message: " + message);
 
         if (message.equals("YOU'RE STARTING WITH IT")) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(MyGcmListenerService.this);
 
-            final String mToken = prefs.getString(getResources().getString(R.string.prefs_token_key), "");
-
-            RequestInterceptor requestInterceptor = new RequestInterceptor() {
-                @Override
-                public void intercept(RequestFacade request) {
-                    request.addHeader("Authorization", "Token " + mToken);
-                }
-            };
-
-            RestAdapter restAdapter = new RestAdapter.Builder()
-                    .setEndpoint(getResources().getString(R.string.api_endpoint))
-                    .setRequestInterceptor(requestInterceptor)
-                    .build();
-
-            GetItService service = restAdapter.create(GetItService.class);
+            Log.d(TAG, "WILL SEND LOCATION");
+            sendLocation = true;
 
             mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
 
             if (mLocation != null) {
-                Log.d(TAG, "LAT:  " + mLocation.getLatitude());
-                Log.d(TAG, "LON:  " + mLocation.getLongitude());
-
-//            GetItLocation location = new GetItLocation(42, -71);
-                GetItLocation location = new GetItLocation(mLocation.getLatitude(), mLocation.getLongitude());
-//                GetItLocation location = new GetItLocation(0, 0);
-
-                service.confirmLocation(location, new Callback<Boolean>() {
-                    @Override
-                    public void success(Boolean serverGotIt, Response response) {
-                        if (serverGotIt) {
-                            sendNotification(message);
-                            Log.d(TAG, "SERVER GOT IT");
-                        } else {
-                            Log.d(TAG, "SERVER DIDN'T GET IT");
-                        }
-                    }
-
-                    @Override
-                    public void failure(RetrofitError retrofitError) {
-                        retrofitError.printStackTrace();
-                        // Log error here since request failed
-                    }
-                });
+                sendLocationToServer();
+            } else {
+                Log.d(TAG, "LOCATION IS NULL");
             }
 
 
@@ -193,7 +230,7 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_map)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("GET IT")
                 .setContentText(message)
                 .setAutoCancel(true)

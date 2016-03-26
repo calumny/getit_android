@@ -4,11 +4,15 @@ import android.animation.ArgbEvaluator;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.location.Location;
 //import android.location.LocationListener;
 import android.preference.PreferenceManager;
 //import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.widget.DrawerLayout;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
@@ -17,7 +21,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.facebook.rebound.SimpleSpringListener;
@@ -115,6 +121,44 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
 
     }
 
+
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView parent, View view, int position, long id) {
+            switchActivity(position);
+        }
+    }
+
+    public void switchActivity(int position) {
+        switch (position) {
+            case 0:
+                Intent statsActivity = new Intent(GetIt.this, StatsActivity.class);
+                mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                startActivity(statsActivity);
+                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
+                break;
+            case 1:
+                Intent mapActivity = new Intent(GetIt.this, MapActivity.class);
+                mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                mapActivity.putExtra("LAT", mLocation.getLatitude());
+                mapActivity.putExtra("LON", mLocation.getLongitude());
+                startActivity(mapActivity);
+                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
+                break;
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        mDrawerLayout.closeDrawers();
+        super.onStop();
+    }
+
+    private String[] mNavigationDrawerItemTitles;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ActionBarDrawerToggle mDrawerToggle;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,14 +166,14 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(GetIt.this);
 // then you use
-        Boolean lastGotIt = prefs.getBoolean(getResources().getString(R.string.prefs_got_it_key), false);
+        gotIt = prefs.getBoolean(getResources().getString(R.string.prefs_got_it_key), false);
         Integer gotItYear = prefs.getInt(getResources().getString(R.string.prefs_year_key), 2015);
         Integer gotItMonth = prefs.getInt(getResources().getString(R.string.prefs_month_key), 0);
         DateTime currTime = new DateTime();
         Integer currMonth = currTime.getMonthOfYear();
         Integer currYear = currTime.getYear();
 
-        gotIt = lastGotIt && gotItYear.equals(currYear) && gotItMonth.equals(currMonth);
+        //gotIt = lastGotIt && gotItYear.equals(currYear) && gotItMonth.equals(currMonth);
 
         setContentView(R.layout.activity_get_it);
 
@@ -138,26 +182,70 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
         messageView.setVisibility(View.VISIBLE);
 
 
-        if (!gotIt) {
-            getCount();
-        } else {
+        if (gotIt) {
             Intent giveIt = new Intent(GetIt.this, GiveIt.class);
             startActivity(giveIt);
             overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
             finish();
         }
+
+        mNavigationDrawerItemTitles= getResources().getStringArray(R.array.navigation_drawer_items_array);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout.setScrimColor(Color.TRANSPARENT);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        DrawerItem[] drawerItem = new DrawerItem[2];
+
+        drawerItem[0] = new DrawerItem(R.drawable.ic_home, "Statistics");
+        drawerItem[1] = new DrawerItem(R.drawable.ic_map, "Map");
+
+        DrawerItemAdapter adapter = new DrawerItemAdapter(this, R.layout.red_list_item, drawerItem);
+
+        DrawerItemClickListener clickListener = new DrawerItemClickListener();
+
+        mDrawerList.setAdapter(adapter);
+        mDrawerList.setOnItemClickListener(clickListener);
+        mDrawerList.bringToFront();
+
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_red_nav_drawer,
+                R.string.title_activity_give_it,  /* "open drawer" description */
+                R.string.title_activity_give_it  /* "close drawer" description */
+        ) {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, slideOffset);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                Log.d(TAG, "VISIBLE");
+                mDrawerList.requestLayout();
+                super.onDrawerOpened(drawerView);
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+
+            }
+        };
+
+
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Set the drawer toggle as the DrawerListener
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
         buildGoogleApiClient();
         mGoogleApiClient.connect();
-
-        View map = findViewById(R.id.map);
-        map.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent mapActivity = new Intent(GetIt.this, MapActivity.class);
-                startActivity(mapActivity);
-                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
-            }
-        });
 
         setButtonListener();
 
@@ -189,38 +277,6 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
         } else {
             checkStatus();
         }
-
-    }
-
-    private void getCount() {
-
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(GetIt.this);
-
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(getResources().getString(R.string.api_endpoint))
-                .build();
-
-        GetItService service = restAdapter.create(GetItService.class);
-
-        service.getCount(new Callback<Integer>() {
-            @Override
-            public void success(Integer totalCount, Response response) {
-                TextView count = (TextView) findViewById(R.id.totalCount);
-                if (totalCount == 1) {
-                    count.setText(String.format("%d OTHER PERSON HAS IT", totalCount));
-                } else {
-                    count.setText(String.format("%d OTHER PEOPLE HAVE IT", totalCount));
-                }
-                count.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void failure(RetrofitError retrofitError) {
-
-                retrofitError.printStackTrace();
-                // Log error here since request failed
-            }
-        });
 
     }
 
@@ -429,10 +485,13 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
     public void setXrotationProgress(float progress) {    button.setRotationX(progress);
     }
 
-    public void setMessageTranslationProgress(float progress) {    messageView.setTranslationX(progress);
+    public void setMessageTranslationProgress(float progress) {
+        messageView.setTranslationX(progress);
     }
 
-    public void setStatusTranslationProgress(float progress) {    status.setTranslationX(progress);
+    public void setStatusTranslationProgress(float progress) {
+        status.setTranslationX(progress);
+        button.setTranslationX(progress);
     }
 
     public void messagetranslation(boolean on) {
@@ -697,6 +756,19 @@ public class GetIt extends Activity implements GoogleApiClient.ConnectionCallbac
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_get_it, menu);
         return true;
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
     }
 
     @Override

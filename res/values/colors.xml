@@ -5,4 +5,7 @@
     <color name="getItDark">#FF5252</color>
     <color name="giveItLight">#3F51B5</color>
     <color name="giveItDark">#009688</color>
+    <color name="darkBlue">#303F9F</color>
+    <color name="lightBlue">#C5CAE9</color>
+    <color name="darkPurple">#7B1FA2</color>
 </resources>

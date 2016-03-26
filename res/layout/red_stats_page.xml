@@ -1,0 +1,125 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/darkPurple"
+    android:scrollbars="none" tools:context=".GetIt"
+    android:overScrollMode="never">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="600dp">
+
+        <TextView android:text="X PEOPLE HAVE IT"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="30sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/totalText"/>
+
+        <TextView android:text="13d 11h 59m 12s"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/totalText"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="45sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/countdownText"/>
+
+        <TextView android:text="UNTIL IT RESETS"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/countdownText"
+            android:layout_marginTop="-5dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="24sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/untilItResets"/>
+
+        <TextView android:text="IT'S TRAVELED"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/untilItResets"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="30sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/its_traveled"/>
+
+        <TextView android:text="2432 MILES"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/its_traveled"
+            android:layout_marginTop="-5dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="45sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/distance"/>
+
+        <TextView android:text="AT A SPEED OF"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/distance"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="30sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/at_velocity"/>
+
+        <TextView android:text="43.6 MPH"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/at_velocity"
+            android:layout_marginTop="-5dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="45sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/velocity"/>
+
+        <TextView android:text="SOMEONE GETS IT EVERY"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/velocity"
+            android:layout_marginTop="20dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="30sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/someone_gets_it"/>
+
+        <TextView android:text="2.6 MINUTES"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/someone_gets_it"
+            android:layout_marginTop="-5dp"
+            android:layout_centerHorizontal="true"
+            android:textSize="45sp"
+            android:gravity="center"
+            android:textColor="@color/getItDark"
+            android:id="@+id/frequency"/>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:paddingTop="550dp"
+            android:id="@+id/generations"
+            android:paddingLeft="16dp">
+
+
+        </LinearLayout>
+    </RelativeLayout>
+</ScrollView>

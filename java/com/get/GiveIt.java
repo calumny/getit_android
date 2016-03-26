@@ -2,13 +2,18 @@ package com.get;
 
 import android.animation.ArgbEvaluator;
 import android.app.Activity;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 //import android.support.v7.app.AppCompatActivity;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v4.app.ActionBarDrawerToggle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
@@ -16,10 +21,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
+
+import android.widget.AdapterView;
+
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.facebook.rebound.SimpleSpringListener;
@@ -120,6 +127,45 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 
     }
 
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+        @Override
+        public void onItemClick(AdapterView parent, View view, int position, long id) {
+            switchActivity(position);
+        }
+    }
+
+    public void switchActivity(int position) {
+        switch (position) {
+            case 0:
+                Intent statsActivity = new Intent(GiveIt.this, StatsActivity.class);
+                mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                startActivity(statsActivity);
+                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
+                break;
+            case 1:
+                Intent mapActivity = new Intent(GiveIt.this, MapActivity.class);
+                mLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+                mapActivity.putExtra("LAT", mLocation.getLatitude());
+                mapActivity.putExtra("LON", mLocation.getLongitude());
+                startActivity(mapActivity);
+                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
+                break;
+        }
+    }
+
+    private float initialButtonX, initialButtonY;
+
+    private String[] mNavigationDrawerItemTitles;
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+    private ActionBarDrawerToggle mDrawerToggle;
+
+    @Override
+    protected void onStop() {
+        mDrawerLayout.closeDrawers();
+        super.onStop();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,18 +177,64 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
         messageView = (TextView) findViewById(R.id.messageText);
         messageView.setVisibility(View.VISIBLE);
 
+        mNavigationDrawerItemTitles= getResources().getStringArray(R.array.navigation_drawer_items_array);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerLayout.setScrimColor(Color.TRANSPARENT);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        DrawerItem[] drawerItem = new DrawerItem[2];
+
+        drawerItem[0] = new DrawerItem(R.drawable.ic_stats, "Statistics");
+        drawerItem[1] = new DrawerItem(R.drawable.ic_map, "Map");
+
+        DrawerItemAdapter adapter = new DrawerItemAdapter(this, R.layout.list_item, drawerItem);
+
+        DrawerItemClickListener clickListener = new DrawerItemClickListener();
+
+        mDrawerList.setAdapter(adapter);
+        mDrawerList.setOnItemClickListener(clickListener);
+        mDrawerList.bringToFront();
+
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+                R.drawable.ic_drawer,
+                R.string.title_activity_give_it,  /* "open drawer" description */
+                R.string.title_activity_give_it  /* "close drawer" description */
+        ) {
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, slideOffset);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                Log.d(TAG, "VISIBLE");
+                mDrawerList.requestLayout();
+                super.onDrawerOpened(drawerView);
+            }
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+
+            }
+
+            @Override
+            public void onDrawerStateChanged(int newState) {
+
+            }
+        };
+
+
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+
+        // Set the drawer toggle as the DrawerListener
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
         buildGoogleApiClient();
         mGoogleApiClient.connect();
-
-        View map = findViewById(R.id.map);
-        map.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent mapActivity = new Intent(GiveIt.this, MapActivity.class);
-                startActivity(mapActivity);
-                overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
-            }
-        });
 
         setButtonListener();
 
@@ -209,17 +301,51 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
                     overridePendingTransition(R.anim.activity_slide_in, R.anim.activity_slide_out);
                     finish();
                 } else {
-                    getGenerationCounts();
+                    getChildCount();
                 }
             }
 
             @Override
             public void failure(RetrofitError retrofitError) {
-                showMessage("COULDN'T CONNECT TO SERVER");
+                showError("COULDN'T CONNECT TO SERVER");
                 retrofitError.printStackTrace();
                 // Log error here since request failed
             }
         });
+    }
+
+    private void getChildCount() {
+
+        showGiveIt();
+        RequestInterceptor requestInterceptor = new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+                request.addHeader("Authorization", "Token " + mToken);
+            }
+        };
+
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(getResources().getString(R.string.api_endpoint))
+                .setRequestInterceptor(requestInterceptor)
+                .build();
+
+        GetItService service = restAdapter.create(GetItService.class);
+
+        service.checkGaveIt(new Callback<Integer>() {
+            @Override
+            public void success(Integer children, Response response) {
+
+                mChildren = children;
+
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+                retrofitError.printStackTrace();
+                // Log error here since request failed
+            }
+        });
+
     }
 
     private void checkGaveIt() {
@@ -251,7 +377,6 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
                     }
                     resettable = true;
                     showMessage(message);
-                    getGenerationCounts();
                 } else {
                     resettable = true;
                     showMessage("NOBODY GOT IT");
@@ -264,7 +389,7 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
             @Override
             public void failure(RetrofitError retrofitError) {
                 resettable = true;
-                showMessage("COULDN'T CONNECT TO SERVER");
+                showError("COULDN'T CONNECT TO SERVER");
                 retrofitError.printStackTrace();
                 // Log error here since request failed
             }
@@ -277,112 +402,30 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
         Button giveItButton = (Button) findViewById(R.id.give_it);
         giveItButton.setText("GIVE IT");
 
+        serverError = false;
         givingIt = false;
         resettable = false;
         dodgingIt = false;
 
     }
 
+    private void toggleGiveItButton() {
+        Button giveItButton = (Button) findViewById(R.id.give_it);
+        String currText = giveItButton.getText().toString();
+
+        if (currText.equals(getResources().getString(R.string.give_it))) {
+            giveItButton.setText(getResources().getString(R.string.giving_it));
+            dodgingIt = true;
+        } else {
+            giveItButton.setText(getResources().getString(R.string.give_it));
+            dodgingIt = false;
+        }
+    }
+
     private void showGiveIt() {
 
         View giveItButton = findViewById(R.id.give_it);
         giveItButton.setVisibility(View.VISIBLE);
-
-    }
-
-    private void getGenerationCounts() {
-
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(GiveIt.this);
-
-        RequestInterceptor requestInterceptor = new RequestInterceptor() {
-            @Override
-            public void intercept(RequestFacade request) {
-                request.addHeader("Authorization", "Token " + mToken);
-            }
-        };
-
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(getResources().getString(R.string.api_endpoint))
-                .setRequestInterceptor(requestInterceptor)
-                .build();
-
-        GetItService service = restAdapter.create(GetItService.class);
-
-        service.getGenerations(new Callback<List<Generation>>() {
-            @Override
-            public void success(List<Generation> generations, Response response) {
-
-                Boolean firstGeneration = true;
-                Boolean prevSingle = false;
-                LinearLayout generationsLayout = (LinearLayout) findViewById(R.id.generations);
-                generationsLayout.removeAllViews();
-
-                if (generations.size() == 0) {
-
-                    mChildren = 0;
-
-                    TextView generationView = new TextView(GiveIt.this);
-
-                    generationView.setText("YOU'VE GIVEN IT TO 0 PEOPLE");
-//                    generationView.setTextAppearance(GiveIt.this, R.style.Base_TextAppearance_AppCompat_Medium);
-                    generationView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-                    generationView.setTextColor(getResources().getColor(R.color.gotItText));
-
-                    generationsLayout.addView(generationView);
-
-                } else {
-
-                    mChildren = generations.get(0).getCount();
-
-                    for (Generation generation : generations) {
-
-                        int count = generation.getCount();
-
-                        String locale = "WHO'VE GIVEN IT TO %d PEOPLE";
-
-                        if (firstGeneration && count != 1) {
-                            locale = "YOU'VE GIVEN IT TO %d PEOPLE";
-                            prevSingle = false;
-                        } else if (firstGeneration) {
-                            locale = "YOU'VE GIVEN IT TO %d PERSON";
-                            prevSingle = true;
-                        } else if (count != 1) {
-                            if (prevSingle) {
-                                locale = "WHO'S GIVEN IT TO %d PEOPLE";
-                            }
-                            prevSingle = false;
-                        } else {
-                            if (prevSingle) {
-                                locale = "WHO'S GIVEN IT TO %d PERSON";
-                            }
-                            locale = "WHO'VE GIVEN IT TO %d PERSON";
-                            prevSingle = true;
-                        }
-
-                        firstGeneration = false;
-
-                        String generationText = String.format(locale, count);
-
-                        TextView generationView = new TextView(GiveIt.this);
-
-                        generationView.setText(generationText);
-                        generationView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-//                        generationView.setTextAppearance(GiveIt.this, R.style.Base_TextAppearance_AppCompat_Medium);
-                        generationView.setTextColor(getResources().getColor(R.color.gotItText));
-
-                        generationsLayout.addView(generationView);
-
-                    }
-                }
-
-            }
-
-            @Override
-            public void failure(RetrofitError retrofitError) {
-                retrofitError.printStackTrace();
-                // Log error here since request failed
-            }
-        });
 
     }
 
@@ -402,6 +445,9 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
         Button giveItButton = (Button) findViewById(R.id.give_it);
         button = giveItButton;
 
+        initialButtonX = button.getX();
+        initialButtonY = button.getY();
+
         giveItButton.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -410,12 +456,12 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
                     float screenX = event.getX();
                     float screenY = event.getY();
                     float viewX = screenX - v.getWidth() / 2;
-                    float viewY = -screenY + v.getHeight() / 2;
+                    float viewY = screenY - v.getHeight() / 2;
 
 
                     if (event.getY() < v.getHeight() + 30 && event.getY() > -30 && event.getX() < v.getWidth() + 30 && event.getX() > -30) {
                         xrotation(true);
-                        xrotationSpring.setEndValue(viewY / 5);
+                        xrotationSpring.setEndValue(-viewY / 5);
                         yrotation(true);
                         yrotationSpring.setEndValue(viewX / 20);
 //                        yTranslationSpring.setEndValue(0);
@@ -424,20 +470,21 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
                         float scaleProgress = Math.max(0, 1 - 2 * (Math.abs(viewX) + Math.abs(viewY)) / (v.getWidth() + v.getHeight()));
                         depthSpring.setEndValue(scaleProgress);
                         if (dodgingIt) {
-//                            Log.d("VIEW X: ", "" + viewX);
-//                            Log.d("VIEW Y: ", "" + viewY);
+
                             if (viewX >= 0) {
-                                xTranslationSpring.setEndValue(screenX - v.getWidth()*1.25 - 30);
+                                xTranslationSpring.setEndValue(v.getX()  + viewX - v.getWidth() - 60);
                             } else {
-                                xTranslationSpring.setEndValue(screenX + v.getWidth()/4 + 30);
+                                xTranslationSpring.setEndValue(v.getX() + viewX + 60);
                             }
 
 //                            xTranslationSpring.setEndValue(v.getWidth() + viewX + 30);
 
                             if (viewY >= 0) {
-                                yTranslationSpring.setEndValue(viewY + 30);
+                                yTranslationSpring.setEndValue(v.getY() - 1200 + screenY - v.getHeight() - 60);
+                                Log.d("SET Y: ", "" + (screenY - v.getHeight() - 60));
                             } else {
-                                yTranslationSpring.setEndValue(-viewY - v.getHeight() - 30);
+                                yTranslationSpring.setEndValue(v.getY() - 1200 + screenY + 60);
+                                Log.d("SET Y: ", "" + (v.getY() +  screenY + 60));
                             }
                         }
 
@@ -460,7 +507,9 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
                     yrotation(false);
                     popAnimation(false);
                     depth(false);
-                    xTranslationSpring.setEndValue(0);
+                    if (statusSpring.getEndValue() == 0) {
+                        xTranslationSpring.setEndValue(0);
+                    }
                     yTranslationSpring.setEndValue(0);
                     if (givingIt) {
                         dodgingIt = true;
@@ -526,6 +575,11 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 /*                        if (messageSpring.getEndValue() >= 0) {
                             messageSpring.setEndValue(-width);
                         } else if (messageSpring.getEndValue() < 0) {*/
+                        if (messageSpring.getEndValue() == 0 && !serverError) {
+                            toggleGiveItButton();
+                        } else if (serverError) {
+                            resetGiveItButton();
+                        }
                         if (resettable && messageSpring.getEndValue() == width) {
                             resetGiveItButton();
                         }
@@ -547,6 +601,7 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 /*                        if (statusSpring.getEndValue() < 0) {
                             statusSpring.setCurrentValue(width);*/
                         statusSpring.setEndValue(0);
+                        xTranslationSpring.setEndValue(0);
 //                        }
                     }
                 });
@@ -600,7 +655,9 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
     public void setMessageTranslationProgress(float progress) {    messageView.setTranslationX(progress);
     }
 
-    public void setStatusTranslationProgress(float progress) {    status.setTranslationX(progress);
+    public void setStatusTranslationProgress(float progress) {
+        status.setTranslationX(progress);
+//        button.setTranslationX(progress);
     }
 
     public void messagetranslation(boolean on) {
@@ -730,7 +787,7 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 
             @Override
             public void failure(RetrofitError retrofitError) {
-                showMessage("COULDN'T CONNECT TO SERVER");
+                showError("COULDN'T CONNECT TO SERVER");
                 retrofitError.printStackTrace();
                 // Log error here since request failed
             }
@@ -744,11 +801,18 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 
     private View status;
     private TextView messageView;
+    private boolean serverError = false;
+
+    private void showError(String message) {
+        serverError = true;
+        showMessage(message);
+    }
 
     private void showMessage(String message) {
         messageView.setText(message);
         messageSpring.setEndValue(0f);
         statusSpring.setEndValue(-width);
+        xTranslationSpring.setEndValue(-width);
 /*        final TextView text =  (TextView) findViewById(R.id.statusText);
         final TextView messageView = (TextView) findViewById(R.id.messageText);
         messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 60);
@@ -810,11 +874,11 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 
     private void showGivingIt() {
         givingIt = true;
-        dodgingIt = true;
+//        dodgingIt = true;
 //        messageView.setText("GIVING IT");
 
         Button giveItButton = (Button) findViewById(R.id.give_it);
-        giveItButton.setText("GIVING IT");
+//        giveItButton.setText("GIVING IT");
         showMessage("GIVING IT");
 
 //        messageSpring.setEndValue(0f);
@@ -857,7 +921,7 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
     private void tryGiveIt() {
 
         if (!locationReady) {
-            showMessage("COULDN'T IDENTIFY LOCATION");
+            showError("COULDN'T IDENTIFY LOCATION");
 //            Toast.makeText(GetIt.this, "Couldn't identify location", Toast.LENGTH_SHORT).show();
 
         } else if (!tokenReady) {
@@ -906,9 +970,9 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
 
                 @Override
                 public void failure(RetrofitError retrofitError) {
-                    showMessage("COULDN'T CONNECT TO SERVER");
+                    showError("COULDN'T CONNECT TO SERVER");
 //                    Toast.makeText(GetIt.this, "Couldn't connect to Get It server", Toast.LENGTH_SHORT).show();
-                    resetGiveItButton();
+//                    resetGiveItButton();
 //                    showGiveIt();
                     retrofitError.printStackTrace();
                     // Log error here since request failed
@@ -928,10 +992,26 @@ public class GiveIt extends Activity implements GoogleApiClient.ConnectionCallba
     }
 
     @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement

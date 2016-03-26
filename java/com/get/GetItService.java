@@ -1,5 +1,7 @@
 package com.get;
 
+import org.joda.time.DateTime;
+
 import java.util.List;
 
 import retrofit.Callback;
@@ -22,6 +24,12 @@ public interface GetItService {
 
     @GET("/api/status/")
     void getStatus(Callback<Boolean> cb);
+
+    @GET("/api/countdown/")
+    void getCountdown(Callback<String> cb);
+
+    @GET("/api/get_stats/")
+    void getStats(Callback<Statistics> cb);
 
     @GET("/api/get_generations/")
     void getGenerations(Callback<List<Generation>> cb);

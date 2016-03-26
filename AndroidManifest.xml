@@ -3,6 +3,7 @@
     package="com.get" >
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
     <uses-permission android:name="com.google.android.c2dm.permission.SEND" />
@@ -14,9 +15,10 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".GetIt"
+            android:name="com.get.GetIt"
             android:label="@string/app_name"
-            android:screenOrientation="portrait" >
+            android:screenOrientation="portrait"
+            android:theme="@style/RedAppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -25,12 +27,29 @@
         </activity>
         <activity
             android:name=".GiveIt"
-            android:label="@string/app_name"
+            android:label="@string/title_activity_give_it"
             android:screenOrientation="portrait" >
         </activity>
         <activity
             android:name=".MapActivity"
-            android:label="@string/title_activity_map" >
+            android:label="@string/title_activity_map"
+            android:configChanges="orientation|screenSize"
+            android:parentActivityName=".GetIt">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".GetIt" />
+        </activity>
+        <activity
+            android:name=".StatsActivity"
+            android:label="@string/title_activity_stats"
+            android:screenOrientation="portrait"
+            android:parentActivityName=".GetIt">
+            <!-- Parent activity meta-data to support 4.0 and lower -->
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".GetIt" />
+
         </activity>
         <activity
             android:name=".ResetActivity"

@@ -2,9 +2,47 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme">
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
+        <item name="android:logo">@android:color/transparent</item>
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_back</item>
+        <!--item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item-->
         <!-- Customize your theme here. -->
+    </style>
+
+    <style name="AppTheme.TitleTextStyle" parent="Base.TextAppearance.AppCompat.Title">
+        <item name="android:textColor">@color/giveItDark</item>
+        <item name="android:shadowRadius">0</item>
+        <item name="android:shadowColor">@color/darkBlue</item>
+    </style>
+
+    <!-- ActionBar styles -->
+    <style name="MyActionBar" parent="android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@color/darkBlue</item>
+        <item name="android:titleTextStyle">@style/AppTheme.TitleTextStyle</item>
+        <!--item name="android:color">@color/giveItDark</item-->
+    </style>
+
+    <style name="RedAppTheme">
+        <item name="android:logo">@android:color/transparent</item>
+        <item name="android:actionBarStyle">@style/MyRedActionBar</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_back_red</item>
+        <!--item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item-->
+        <!-- Customize your theme here. -->
+    </style>
+
+    <style name="AppTheme.RedTitleTextStyle" parent="Base.TextAppearance.AppCompat.Title">
+        <item name="android:textColor">@color/getItDark</item>
+        <item name="android:shadowRadius">0</item>
+        <item name="android:shadowColor">@color/darkPurple</item>
+    </style>
+
+    <!-- ActionBar styles -->
+    <style name="MyRedActionBar" parent="android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:background">@color/darkPurple</item>
+        <item name="android:titleTextStyle">@style/AppTheme.RedTitleTextStyle</item>
+        <!--item name="android:color">@color/giveItDark</item-->
     </style>
 
 </resources>
